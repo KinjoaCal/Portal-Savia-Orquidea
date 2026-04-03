@@ -4,8 +4,8 @@ import { DollarSign, Users, TrendingUp, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const financialData = {
-  totalRecaudado: 485750,
-  cuotaMensual: 1500,
+  totalRecaudado: 1600000,
+  cuotaMensual: 850,
   vecinosAlCorriente: 58,
   totalVecinos: 64,
   ultimaActualizacion: "Marzo 2026"

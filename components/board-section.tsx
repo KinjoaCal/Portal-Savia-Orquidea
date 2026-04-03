@@ -41,7 +41,7 @@ export function BoardSection() {
         {/* Section Header */}
         <div className="mx-auto max-w-2xl text-center mb-16">
           <p className="text-sm font-medium uppercase tracking-widest text-primary mb-3">
-            Gestión 2025-2027
+            Gestión 2026-2027
           </p>
           <h2 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Mesa Directiva
@@ -83,7 +83,7 @@ export function BoardSection() {
             <p className="text-sm opacity-90 mt-1">
               Contáctanos en{" "}
               <a href="mailto:mesa@losjardines.com" className="underline hover:no-underline">
-                mesa@losjardines.com
+                savia@orquidea.com
               </a>
             </p>
           </Card>
