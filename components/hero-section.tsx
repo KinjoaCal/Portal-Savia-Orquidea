@@ -24,7 +24,7 @@ export function HeroSection() {
           Condominio<br />Savia Orquidea
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-card/90">
-          Portal de transparencia para vecionos.
+          Portal de transparencia para vecinos.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a
