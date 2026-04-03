@@ -1,4 +1,3 @@
-import { Mail, Phone } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
@@ -6,45 +5,30 @@ const boardMembers = [
   {
     name: "Ramses",
     role: "Presidente",
-    casa: "Casa 12",
-    email: "presidencia@losjardines.com",
-    phone: "55 1234 5678",
     initials: "R",
     description: "Coordinación general y representación legal del condominio ante autoridades.",
   },
   {
     name: "San Juana",
     role: "Vicepresidente",
-    casa: "Casa 28",
-    email: "vicepresidencia@losjardines.com",
-    phone: "55 2345 6789",
     initials: "S",
     description: "Apoyo a la presidencia y coordinación de comités especiales.",
   },
   {
     name: "Edgar Espinoza",
     role: "Tesorera",
-    casa: "Casa 45",
-    email: "tesoreria@losjardines.com",
-    phone: "55 3456 7890",
     initials: "E",
     description: "Administración de fondos, cobro de cuotas y control de egresos.",
   },
   {
     name: "Laura",
     role: "Vocal",
-    casa: "Casa 7",
-    email: "secretaria@losjardines.com",
-    phone: "55 4567 8901",
     initials: "L",
     description: "Actas de asamblea, comunicados oficiales y archivo documental.",
   },
   {
     name: "Alejandro Calderon",
     role: "Vocal",
-    casa: "Casa 33",
-    email: "vigilancia@losjardines.com",
-    phone: "55 5678 9012",
     initials: "A",
     description: "Supervisión de seguridad y coordinación con personal de caseta.",
   }
@@ -81,30 +65,12 @@ export function BoardSection() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground truncate">{member.name}</h3>
                     <p className="text-sm font-medium text-primary">{member.role}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{member.casa}</p>
                   </div>
                 </div>
 
                 <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
                   {member.description}
                 </p>
-
-                <div className="mt-4 pt-4 border-t border-border space-y-2">
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span className="truncate">{member.email}</span>
-                  </a>
-                  <a
-                    href={`tel:${member.phone.replace(/\s/g, "")}`}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span>{member.phone}</span>
-                  </a>
-                </div>
               </CardContent>
             </Card>
           ))}
