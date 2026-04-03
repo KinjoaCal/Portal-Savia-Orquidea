@@ -7,17 +7,17 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Residencial Los Jardines | Portal Vecinal',
-  description: 'Portal oficial del condominio Residencial Los Jardines. Consulta el estado financiero, obras en proceso y conoce a tu mesa directiva.',
+  title: 'Condominio Savia Orquidea | Portal Vecinal',
+  description: 'Portal oficial del condominio Residencial Savia Orquidea. Consulta el estado financiero, obras en proceso y conoce a tu mesa directiva.',
   generator: 'v0.app',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/color-logo.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/color-logo.png',
         media: '(prefers-color-scheme: dark)',
       },
       {
