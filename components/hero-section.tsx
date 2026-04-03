@@ -7,7 +7,7 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/Savia Orquidea.jpg"
-          alt="Vista aérea del Residencial Los Jardines"
+          alt="Vista de la entrada del condominio"
           fill
           className="object-cover"
           priority

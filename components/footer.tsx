@@ -11,9 +11,9 @@ export function Footer() {
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-semibold text-foreground tracking-tight">
-                Los Jardines
+                Savia Orquidea
               </span>
-              <span className="text-xs text-muted-foreground">Residencial</span>
+              <span className="text-xs text-muted-foreground">Condominio</span>
             </div>
           </div>
 
@@ -27,10 +27,10 @@ export function Footer() {
 
         <div className="mt-8 border-t border-border pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Residencial Los Jardines. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Condominio Savia Orquidea. Todos los derechos reservados.
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Calle de los Jardines #100, Colonia Residencial, Ciudad de México
+            Villas de Zapopan, 45133 Zapopan, Jal.
           </p>
         </div>
       </div>
