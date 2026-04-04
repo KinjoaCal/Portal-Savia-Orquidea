@@ -31,7 +31,7 @@ const projects = [
   {
     id: 3,
     title: "Instalación de césped sintético en area de juego/terraza",
-    description: "Remmplazo de cespéd natural por césped sintético en area de juego/terraza",
+    description: "Reemplazo de cespéd natural por césped sintético en area de juego/terraza",
     status: "programado",
     progress: 0,
     budget: 28000,
@@ -42,7 +42,7 @@ const projects = [
   {
     id: 4,
     title: "Instalación de césped sintético en cenefas ",
-    description: "Remmplazo de cespéd natural por césped sintético en cenefas.",
+    description: "Reemplazo de cespéd natural por césped sintético en cenefas.",
     status: "programado",
     progress: 100,
     budget: 62000,
