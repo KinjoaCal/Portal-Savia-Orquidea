@@ -1,49 +1,54 @@
 "use client"
 
-import { Wrench, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import Image from "next/image"
+import { Wrench, Clock, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 const projects = [
   {
     id: 1,
-    title: "Remodelación de Área de Juegos",
-    description: "Instalación de nuevos juegos infantiles con piso de caucho de seguridad y bancas para padres.",
+    title: "Construcción de bodega",
+    description: "Bodega para meterial de mantenimiento y mobiliario",
     status: "en_proceso",
-    progress: 65,
-    budget: 85000,
-    startDate: "Febrero 2026",
-    estimatedEnd: "Abril 2026",
+    progress: 0,
+    budget: 45000,
+    startDate: "Pendiente",
+    estimatedEnd: "Pendiente",
+    image: "/public/images/bodega.jpg"
   },
   {
     id: 2,
-    title: "Iluminación LED en Andadores",
-    description: "Cambio de luminarias convencionales a sistema LED en todos los andadores principales del condominio.",
+    title: "Remodelación de Área de Juegos",
+    description: "Recolección y remodelación de juegos infantiles.",
     status: "en_proceso",
-    progress: 40,
-    budget: 45000,
+    progress: 10,
+    budget: 85000,
     startDate: "Marzo 2026",
-    estimatedEnd: "Mayo 2026",
+    estimatedEnd: "Pendiente",
+    image: "/public/images/Juegos.jpg"
   },
   {
     id: 3,
-    title: "Mantenimiento de Cisterna",
-    description: "Limpieza profunda, impermeabilización y revisión del sistema de bombeo de la cisterna principal.",
+    title: "Instalación de césped sintético en area de juego/terraza",
+    description: "Remmplazo de cespéd natural por césped sintético en area de juego/terraza",
     status: "programado",
     progress: 0,
     budget: 28000,
-    startDate: "Abril 2026",
-    estimatedEnd: "Abril 2026",
+    startDate: "Pendiente",
+    estimatedEnd: "Pendiente",
+    image: "/public/images/cesped.jpg"
   },
   {
     id: 4,
-    title: "Pintura de Fachadas Comunes",
-    description: "Renovación de pintura en todas las fachadas de áreas comunes y caseta de vigilancia.",
+    title: "Instalación de césped sintético en cenefas ",
+    description: "Remmplazo de cespéd natural por césped sintético en cenefas.",
     status: "completado",
     progress: 100,
     budget: 62000,
     startDate: "Enero 2026",
     estimatedEnd: "Febrero 2026",
+    image: "/public/images/cesped.jpg"
   },
 ]
 
@@ -93,18 +98,26 @@ export function ProjectsSection() {
 
             return (
               <Card key={project.id} className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl">{project.title}</CardTitle>
-                      <CardDescription className="mt-2 leading-relaxed">
-                        {project.description}
-                      </CardDescription>
-                    </div>
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3">
                     <Badge className={status.className}>
                       <StatusIcon className="mr-1 h-3 w-3" />
                       {status.label}
                     </Badge>
+                  </div>
+                </div>
+                <CardHeader className="pb-4">
+                  <div>
+                    <CardTitle className="text-xl">{project.title}</CardTitle>
+                    <CardDescription className="mt-2 leading-relaxed">
+                      {project.description}
+                    </CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent>
