@@ -159,15 +159,15 @@ export function ProjectsSection() {
         {/* Summary */}
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           <Card className="border-0 shadow-md bg-card text-center py-6">
-            <div className="text-3xl font-bold text-primary">2</div>
+            <div className="text-3xl font-bold text-primary">1</div>
             <p className="text-sm text-muted-foreground mt-1">Obras en proceso</p>
           </Card>
           <Card className="border-0 shadow-md bg-card text-center py-6">
-            <div className="text-3xl font-bold text-foreground">1</div>
+            <div className="text-3xl font-bold text-foreground">3</div>
             <p className="text-sm text-muted-foreground mt-1">Obra programada</p>
           </Card>
           <Card className="border-0 shadow-md bg-card text-center py-6">
-            <div className="text-3xl font-bold text-accent">1</div>
+            <div className="text-3xl font-bold text-accent">0</div>
             <p className="text-sm text-muted-foreground mt-1">Obra completada</p>
           </Card>
         </div>
