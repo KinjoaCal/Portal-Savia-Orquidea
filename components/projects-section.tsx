@@ -44,7 +44,7 @@ const projects = [
     title: "Instalación de césped sintético en cenefas ",
     description: "Reemplazo de cespéd natural por césped sintético en cenefas.",
     status: "programado",
-    progress: 100,
+    progress: 0,
     budget: 62000,
     startDate: "Enero 2026",
     estimatedEnd: "Febrero 2026",
