@@ -4,7 +4,7 @@ import { DollarSign, Users, TrendingUp, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const financialData = {
-  totalRecaudado: 1600000,
+  totalRecaudado: 1643830,
   cuotaMensual: 850,
   vecinosAlCorriente: 58,
   totalVecinos: 64,
@@ -12,12 +12,13 @@ const financialData = {
 }
 
 const monthlyData = [
-  { mes: "Octubre", monto: 78000, pagos: 52 },
-  { mes: "Noviembre", monto: 82500, pagos: 55 },
-  { mes: "Diciembre", monto: 85500, pagos: 57 },
-  { mes: "Enero", monto: 79500, pagos: 53 },
-  { mes: "Febrero", monto: 84000, pagos: 56 },
-  { mes: "Marzo", monto: 76250, pagos: 58 },
+  //{ mes: "Octubre", monto: 85200, pagos: 10 },
+  { mes: "Octubre", monto: 85200},
+  { mes: "Noviembre", monto: 85200},
+  { mes: "Diciembre", monto: 85200},
+  { mes: "Enero", monto: 85200},
+  { mes: "Febrero", monto: 85200},
+  { mes: "Marzo", monto: 85200},
 ]
 
 export function FinancesSection() {
@@ -149,9 +150,9 @@ export function FinancesSection() {
                       </div>
                     </div>
                   </div>
-                  <div className="w-20 text-right text-sm text-muted-foreground">
+                  {/*<div className="w-20 text-right text-sm text-muted-foreground">
                     {item.pagos} pagos
-                  </div>
+                  </div>*/}
                 </div>
               ))}
             </div>
