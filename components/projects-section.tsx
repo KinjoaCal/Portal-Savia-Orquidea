@@ -46,8 +46,8 @@ const projects = [
     status: "programado",
     progress: 0,
     budget: 62000,
-    startDate: "Enero 2026",
-    estimatedEnd: "Febrero 2026",
+    startDate: "Pendiente",
+    estimatedEnd: "Pendiente",
     image: "/images/cesped.jpg"
   },
 ]
