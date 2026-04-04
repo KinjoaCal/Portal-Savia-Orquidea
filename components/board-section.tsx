@@ -3,34 +3,40 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const boardMembers = [
   {
-    name: "Ramses",
+    name: "Ramsés Iñiguez Romero",
     role: "Presidente",
-    initials: "R",
-    description: "Coordinación general y representación legal del condominio ante autoridades.",
+    initials: "RI",
+    description: "Representante del condominio, dirige la mesa directiva, coordina decisiones y supervisa el cumplimiento de acuerdos.",
   },
   {
-    name: "San Juana",
+    name: "SanJuana Ayala Luna",
     role: "Vicepresidente",
-    initials: "S",
-    description: "Apoyo a la presidencia y coordinación de comités especiales.",
+    initials: "SA",
+    description: "Apoyo a la presidencia, colaborando en la coordinación y seguimiento de actividades.",
   },
   {
-    name: "Edgar Espinoza",
-    role: "Tesorera",
-    initials: "E",
+    name: "Adolfo González Martínez",
+    role: "Secretario",
+    initials: "AG",
+    description: "Control de actas, acuerdos y documentación oficial",
+  },
+  {
+    name: "Edgar Adolfo Espinoza Villanueva",
+    role: "Tesorero",
+    initials: "EA",
     description: "Administración de fondos, cobro de cuotas y control de egresos.",
   },
   {
-    name: "Laura",
+    name: "Laura Miryam Rivera Velázquez",
     role: "Vocal",
-    initials: "L",
-    description: "Actas de asamblea, comunicados oficiales y archivo documental.",
+    initials: "LM",
+    description: "Colaboración en actividades de la mesa directiva, seguimiento a proyectos y comunicación con residentes.",
   },
   {
-    name: "Alejandro Calderon",
+    name: "Joaquín Alejandro Calderón Rodríguez",
     role: "Vocal",
-    initials: "A",
-    description: "Supervisión de seguridad y coordinación con personal de caseta.",
+    initials: "JC",
+    description: "Colaboración en actividades de la mesa directiva, seguimiento a proyectos y comunicación con residentes.",
   }
 ]
 
