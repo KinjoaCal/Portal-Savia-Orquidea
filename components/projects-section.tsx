@@ -15,7 +15,7 @@ const projects = [
     budget: 45000,
     startDate: "Pendiente",
     estimatedEnd: "Pendiente",
-    image: "/public/images/bodega.jpg"
+    image: "/images/bodega.jpg"
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const projects = [
     budget: 85000,
     startDate: "Marzo 2026",
     estimatedEnd: "Pendiente",
-    image: "/public/images/Juegos.jpg"
+    image: "/images/Juegos.jpg"
   },
   {
     id: 3,
@@ -37,7 +37,7 @@ const projects = [
     budget: 28000,
     startDate: "Pendiente",
     estimatedEnd: "Pendiente",
-    image: "/public/images/cesped.jpg"
+    image: "/images/cesped.jpg"
   },
   {
     id: 4,
@@ -48,7 +48,7 @@ const projects = [
     budget: 62000,
     startDate: "Enero 2026",
     estimatedEnd: "Febrero 2026",
-    image: "/public/images/cesped.jpg"
+    image: "/images/cesped.jpg"
   },
 ]
 
