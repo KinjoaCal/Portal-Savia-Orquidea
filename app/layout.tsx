@@ -13,19 +13,19 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/color-logo.png',
+        url: '/Savia Logo.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/color-logo.png',
+        url: '/Savia Logo.png',
         media: '(prefers-color-scheme: dark)',
       },
       {
-        url: '/color-logo.png',
+        url: '/Savia Logo.png',
         type: 'image/svg+xml',
       },
     ],
-    apple: '/color-logo.png',
+    apple: '/Savia Logo.png',
   },
 }
 
