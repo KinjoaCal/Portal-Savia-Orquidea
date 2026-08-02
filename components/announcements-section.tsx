@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Megaphone, Calendar, FileText, ExternalLink, Image as ImageIcon, Sparkles, Filter } from "lucide-react"
+import { Megaphone, Calendar, FileText, ExternalLink, Image as ImageIcon, BellOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,24 +19,6 @@ interface Comunicado {
   created_at: string
 }
 
-// Fallback demo comunicados shown if Supabase table is empty or loading initially
-const demoComunicados: Comunicado[] = [
-  {
-    id: "demo-1",
-    title: "Bienvenida al nuevo portal del Condominio Savia Orquídea",
-    content: "Nos complace presentar el nuevo sitio web informativo de nuestro residencial. Aquí podrás consultar comunicados oficiales, reglamentos, avisos de obras y el informe de cuotas en tiempo real.",
-    category: "Comunicado",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "demo-2",
-    title: "Mantenimiento preventivo en área verde y terraza central",
-    content: "Este fin de semana se llevarán a cabo trabajos de podado y reacondicionamiento en el área común principal. Agradecemos su comprensión y apoyo para mantener despejados los accesos.",
-    category: "Mantenimiento",
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-  },
-]
-
 export function AnnouncementsSection() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos")
@@ -51,14 +33,11 @@ export function AnnouncementsSection() {
           .select("*")
           .order("created_at", { ascending: false })
 
-        if (error || !data || data.length === 0) {
-          setComunicados(demoComunicados)
-        } else {
+        if (data) {
           setComunicados(data)
         }
       } catch (err) {
-        console.warn("Usando datos informativos locales para comunicados:", err)
-        setComunicados(demoComunicados)
+        console.error("Error al consultar comunicados:", err)
       } finally {
         setLoading(false)
       }
@@ -94,7 +73,7 @@ export function AnnouncementsSection() {
         </div>
 
         {/* Category Filters */}
-        {categories.length > 2 && (
+        {comunicados.length > 0 && categories.length > 2 && (
           <div className="flex flex-wrap justify-center gap-2 mb-10">
             {categories.map((cat) => (
               <Button
@@ -110,75 +89,90 @@ export function AnnouncementsSection() {
           </div>
         )}
 
+        {/* Empty State when no comunicados exist */}
+        {!loading && comunicados.length === 0 && (
+          <Card className="max-w-xl mx-auto border-0 shadow-lg text-center p-8 bg-card">
+            <div className="h-16 w-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+              <BellOff className="h-8 w-8" />
+            </div>
+            <CardTitle className="text-xl">Sin Comunicados Publicados Actualmente</CardTitle>
+            <CardDescription className="mt-2">
+              Los comunicados, avisos y noticias de la Mesa Directiva aparecerán publicados en esta sección.
+            </CardDescription>
+          </Card>
+        )}
+
         {/* Comunicados Grid */}
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {filteredComunicados.map((item) => {
-            const dateStr = new Date(item.created_at).toLocaleDateString("es-MX", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })
+        {comunicados.length > 0 && (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {filteredComunicados.map((item) => {
+              const dateStr = new Date(item.created_at).toLocaleDateString("es-MX", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })
 
-            const isImage = item.file_type === "image" || (item.file_url && /\.(jpg|jpeg|png|webp|gif)/i.test(item.file_url))
+              const isImage = item.file_type === "image" || (item.file_url && /\.(jpg|jpeg|png|webp|gif)/i.test(item.file_url))
 
-            return (
-              <Card key={item.id} className="border border-border/60 shadow-lg flex flex-col justify-between hover:shadow-xl transition-shadow bg-card">
-                <CardHeader className="space-y-3 pb-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge className="bg-primary text-primary-foreground font-medium">
-                      {item.category}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {dateStr}
-                    </span>
-                  </div>
-                  <CardTitle className="text-xl leading-snug">{item.title}</CardTitle>
-                </CardHeader>
-
-                <CardContent className="flex-1 space-y-4">
-                  <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
-                    {item.content}
-                  </p>
-
-                  {/* Image Attachment Preview */}
-                  {isImage && item.file_url && (
-                    <div 
-                      className="relative h-44 w-full rounded-xl overflow-hidden cursor-pointer group mt-3 border"
-                      onClick={() => setLightboxImg(item.file_url || null)}
-                    >
-                      <Image
-                        src={item.file_url}
-                        alt={item.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-foreground/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium bg-black/40">
-                        <ImageIcon className="h-4 w-4 mr-1" /> Clic para ampliar
-                      </div>
+              return (
+                <Card key={item.id} className="border border-border/60 shadow-lg flex flex-col justify-between hover:shadow-xl transition-shadow bg-card">
+                  <CardHeader className="space-y-3 pb-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge className="bg-primary text-primary-foreground font-medium">
+                        {item.category}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {dateStr}
+                      </span>
                     </div>
-                  )}
+                    <CardTitle className="text-xl leading-snug">{item.title}</CardTitle>
+                  </CardHeader>
 
-                  {/* Non-Image Document Attachment */}
-                  {!isImage && item.file_url && (
-                    <div className="pt-2">
-                      <a
-                        href={item.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-lg transition-colors w-full justify-center"
+                  <CardContent className="flex-1 space-y-4">
+                    <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
+                      {item.content}
+                    </p>
+
+                    {/* Image Attachment Preview */}
+                    {isImage && item.file_url && (
+                      <div 
+                        className="relative h-44 w-full rounded-xl overflow-hidden cursor-pointer group mt-3 border"
+                        onClick={() => setLightboxImg(item.file_url || null)}
                       >
-                        <FileText className="h-4 w-4" />
-                        Ver / Descargar Adjunto ({item.file_name || "Documento"})
-                        <ExternalLink className="h-3 w-3 ml-auto" />
-                      </a>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                        <Image
+                          src={item.file_url}
+                          alt={item.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-foreground/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium bg-black/40">
+                          <ImageIcon className="h-4 w-4 mr-1" /> Clic para ampliar
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Non-Image Document Attachment */}
+                    {!isImage && item.file_url && (
+                      <div className="pt-2">
+                        <a
+                          href={item.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-lg transition-colors w-full justify-center"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Ver / Descargar Adjunto ({item.file_name || "Documento"})
+                          <ExternalLink className="h-3 w-3 ml-auto" />
+                        </a>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Lightbox Modal for Images */}
