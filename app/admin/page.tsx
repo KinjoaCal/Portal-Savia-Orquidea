@@ -465,6 +465,17 @@ export default function AdminPage() {
     setFinanzasData({ ...finanzasData, monthly_data: updated })
   }
 
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  const handleCopyRegisterLink = () => {
+    if (typeof window !== "undefined") {
+      const registerUrl = `${window.location.origin}/registro-mesa-directiva`
+      navigator.clipboard.writeText(registerUrl)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 3000)
+    }
+  }
+
   // Delete Project
   const handleDeleteProject = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar esta obra? Se eliminarán también sus referencias.")) return
@@ -536,7 +547,28 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCopyRegisterLink}
+              className="gap-1.5 text-xs font-medium"
+              title="Copiar enlace secreto de registro para otros miembros de la Mesa Directiva"
+            >
+              {copiedLink ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span>¡Link Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden md:inline">Copiar Link de Registro</span>
+                  <span className="md:hidden">Link Admin</span>
+                </>
+              )}
+            </Button>
+
             <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
               <Link href="/">
                 <Home className="h-4 w-4 mr-2" />
