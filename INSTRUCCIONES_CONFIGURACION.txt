@@ -1,0 +1,115 @@
+===============================================================================
+  GUÍA PASO A PASO: CONFIGURACIÓN DE SUPABASE, CLOUDINARY Y VERCEL
+  Sitio Web Condominio Residencial Savia Orquídea
+===============================================================================
+
+Para permitir que los miembros de la Mesa Directiva tengan cuenta con privilegios
+de iniciar sesión y subir/gestionar imágenes y archivos de forma segura, sigue
+estos pasos de configuración en los servicios gratuitos de Supabase, Cloudinary y Vercel.
+
+Una vez completados estos pasos, avísame para realizar toda la integración de código
+y crear el panel de administración en el sitio web.
+
+-------------------------------------------------------------------------------
+PASO 1: CREAR Y CONFIGURAR TU PROYECTO EN SUPABASE (Usuarios y Autenticación)
+-------------------------------------------------------------------------------
+1. Ingresa a https://supabase.com/ y regístrate o inicia sesión (con GitHub o Google).
+2. Crea un nuevo proyecto haciendo clic en "New Project":
+   - Name: savia-orquidea-db (o el nombre de tu preferencia).
+   - Database Password: Ingresa una contraseña segura (guárdala en un lugar seguro).
+   - Region: Selecciona la región más cercana (ej. South America / Brazil o US East).
+   - Haz clic en "Create new project" (tardará entre 1 y 2 minutos en aprovisionarse).
+3. Obtener las Claves de Acceso (API Keys):
+   - En la barra lateral izquierda, ve a "Project Settings" (icono de engranaje) -> "API".
+   - Copia los siguientes dos datos:
+     a) Project URL (ej: https://xxxxxx.supabase.co)
+        https://nrrbjvjoqieeiecxqgcf.supabase.co/rest/v1/
+     b) Project API keys -> "anon" "public" (ej: eyJhbGciOi...)
+        eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ycmJqdmpvcWllZWllY3hxZ2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MTQ0NjUsImV4cCI6MjEwMTE5MDQ2NX0.jSeQVjPHjCIGOqbKqw3J_Kzmf-incGPTaHKo2p4fdpY
+4. Crear Usuarios para la Mesa Directiva:
+   - En el menú lateral, ve a "Authentication" -> "Users".
+   - Haz clic en "Add User" -> "Create User".
+   - Ingresa el correo y la contraseña de cada miembro de la mesa directiva que tendrá acceso.
+
+-------------------------------------------------------------------------------
+PASO 2: CREAR Y CONFIGURAR TU CUENTA EN CLOUDINARY (Subida de Imágenes y Archivos)
+-------------------------------------------------------------------------------
+1. Ingresa a https://cloudinary.com/ y crea una cuenta gratuita.
+2. Obtener los Datos de la Cuenta:
+   - En el menú lateral, entra al "Dashboard" principal.
+   - Copia los siguientes valores:
+     a) Cloud Name (Nombre de tu nube) jyhx4r5d
+     b) API Key (Clave pública de API) 647498714183243
+     c) API Secret (Haz clic en la opción para revelarlo) Y10Zp9b1tWtdfENXma-QLVINCDo
+3. Crear un Upload Preset (Preset de carga no firmado):
+   - Ve a "Settings" (icono de engranaje abajo a la izquierda) -> pestaña "Upload".
+   - Desplázate hasta la sección "Upload presets".
+   - Haz clic en "Add upload preset".
+   - Nombre del preset: ej. savia_preset
+   - En "Signing Mode": cámbialo de "Signed" a "Unsigned".
+   - Haz clic en "Save" arriba a la derecha.
+
+-------------------------------------------------------------------------------
+PASO 3: CONFIGURAR LAS VARIABLES DE ENTORNO EN VERCEL
+-------------------------------------------------------------------------------
+1. Ingresa a tu panel de Vercel (https://vercel.com/dashboard).
+2. Selecciona el proyecto de este sitio web ("Sitio Savia Orquidea").
+3. Ve a la pestaña "Settings" -> "Environment Variables".
+4. Agrega una por una las siguientes variables de entorno:
+
+   * Variable 1:
+     - Key: NEXT_PUBLIC_SUPABASE_URL
+     - Value: (Tu Project URL de Supabase)
+
+   * Variable 2:
+     - Key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+     - Value: (Tu clave anon/public de Supabase)
+
+   * Variable 3:
+     - Key: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+     - Value: (Tu Cloud Name de Cloudinary)
+
+   * Variable 4:
+     - Key: CLOUDINARY_API_KEY
+     - Value: (Tu API Key de Cloudinary)
+
+   * Variable 5:
+     - Key: CLOUDINARY_API_SECRET
+     - Value: (Tu API Secret de Cloudinary)
+
+   * Variable 6:
+     - Key: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+     - Value: savia_preset
+
+5. Asegúrate de que las casillas de Production, Preview y Development estén marcadas para cada una y guarda los cambios.
+
+-------------------------------------------------------------------------------
+PASO 4: CONFIGURACIÓN EN TU ENTORNO LOCAL (.env.local)
+-------------------------------------------------------------------------------
+Para que podamos probar la funcionalidad en tu computadora antes de publicarla,
+crearemos un archivo llamado `.env.local` en la raíz de este proyecto con el
+siguiente contenido (reemplazando con tus datos reales):
+
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_aqui
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=tu_cloud_name_aqui
+CLOUDINARY_API_KEY=tu_api_key_aqui
+CLOUDINARY_API_SECRET=tu_api_secret_aqui
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=savia_preset
+
+-------------------------------------------------------------------------------
+SIGUIENTE PASO
+-------------------------------------------------------------------------------
+Una vez que tengas tus cuentas creadas y los datos listos (o guardados en tu .env.local),
+avísame para implementar:
+1. Las dependencias necesarias (@supabase/supabase-js, cloudinary).
+2. El sistema de login e inicio de sesión para la Mesa Directiva.
+3. El panel administrativo exclusivo para subir imágenes/documentos y publicar comunicados.
+4. La visualización dinámica de los archivos cargados en el sitio web público.
+===============================================================================
+En cuanto tengas las cuentas creadas y hayas configurado las claves/variables (o las tengas a la mano), avísame y con gusto implementaré:
+
+La integración de los SDKs de Supabase y Cloudinary.
+El módulo de autenticación (Login para la Mesa Directiva).
+El panel de administración para la carga de imágenes/documentos.
+La visualización dinámica de las publicaciones en el sitio.

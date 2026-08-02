@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 
 const navigation = [
   { name: "Inicio", href: "#inicio" },
+  { name: "Comunicados", href: "#comunicados" },
   { name: "Finanzas", href: "#finanzas" },
   { name: "Obras", href: "#obras" },
+  { name: "Documentos", href: "#documentos" },
   { name: "Mesa Directiva", href: "#directiva" },
 ]
 
@@ -43,9 +45,9 @@ export function Header() {
           ))}
         </div>
 
-        <div className="hidden lg:flex">
-          <Button variant="default" size="sm">
-            Contactar
+        <div className="hidden lg:flex gap-3">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/login">Acceso Mesa Directiva</Link>
           </Button>
         </div>
 
@@ -80,8 +82,8 @@ export function Header() {
                 {item.name}
               </Link>
             ))}
-            <Button variant="default" className="mt-4 w-full">
-              Contactar
+            <Button variant="outline" className="mt-4 w-full" asChild onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/login">Acceso Mesa Directiva</Link>
             </Button>
           </div>
         </div>
