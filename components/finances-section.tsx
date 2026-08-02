@@ -1,29 +1,83 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { DollarSign, Users, TrendingUp, Calendar } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-const financialData = {
+interface MonthlyItem {
+  mes: string
+  monto: number
+}
+
+interface FinancialData {
+  totalRecaudado: number
+  cuotaMensual: number
+  vecinosAlCorriente: number
+  totalVecinos: number
+  tendencia: string
+  ultimaActualizacion: string
+  monthlyData: MonthlyItem[]
+}
+
+const defaultFinancialData: FinancialData = {
   totalRecaudado: 1643830,
   cuotaMensual: 850,
   vecinosAlCorriente: 58,
   totalVecinos: 64,
-  ultimaActualizacion: "Marzo 2026"
+  tendencia: "+8%",
+  ultimaActualizacion: "Marzo 2026",
+  monthlyData: [
+    { mes: "Octubre", monto: 85200 },
+    { mes: "Noviembre", monto: 85200 },
+    { mes: "Diciembre", monto: 85200 },
+    { mes: "Enero", monto: 85200 },
+    { mes: "Febrero", monto: 85200 },
+    { mes: "Marzo", monto: 85200 },
+  ],
 }
 
-const monthlyData = [
-  //{ mes: "Octubre", monto: 85200, pagos: 10 },
-  { mes: "Octubre", monto: 85200},
-  { mes: "Noviembre", monto: 85200},
-  { mes: "Diciembre", monto: 85200},
-  { mes: "Enero", monto: 85200},
-  { mes: "Febrero", monto: 85200},
-  { mes: "Marzo", monto: 85200},
-]
-
 export function FinancesSection() {
-  const porcentajeAlCorriente = Math.round((financialData.vecinosAlCorriente / financialData.totalVecinos) * 100)
-  
+  const [finances, setFinances] = useState<FinancialData>(defaultFinancialData)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchFinances() {
+      try {
+        const { data, error } = await supabase
+          .from("finanzas")
+          .select("*")
+          .eq("id", "general")
+          .single()
+
+        if (data) {
+          setFinances({
+            totalRecaudado: Number(data.total_recaudado ?? 1643830),
+            cuotaMensual: Number(data.cuota_mensual ?? 850),
+            vecinosAlCorriente: Number(data.vecinos_al_corriente ?? 58),
+            totalVecinos: Number(data.total_vecinos ?? 64),
+            tendencia: data.tendencia || "+8%",
+            ultimaActualizacion: data.ultima_actualizacion || "Marzo 2026",
+            monthlyData: data.monthly_data && data.monthly_data.length > 0 ? data.monthly_data : defaultFinancialData.monthlyData,
+          })
+        }
+      } catch (err) {
+        console.warn("Usando finanzas iniciales:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFinances()
+  }, [])
+
+  const porcentajeAlCorriente = finances.totalVecinos > 0 
+    ? Math.round((finances.vecinosAlCorriente / finances.totalVecinos) * 100)
+    : 0
+
+  // Calculate max monthly amount for percentage bars
+  const maxMonto = finances.monthlyData.reduce((max, item) => Math.max(max, item.monto), 1)
+
   return (
     <section id="finanzas" className="py-24 bg-background">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -53,7 +107,7 @@ export function FinancesSection() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                ${financialData.totalRecaudado.toLocaleString()}
+                ${finances.totalRecaudado.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Acumulado este periodo
@@ -72,7 +126,7 @@ export function FinancesSection() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                ${financialData.cuotaMensual.toLocaleString()}
+                ${finances.cuotaMensual.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Por vivienda
@@ -91,12 +145,12 @@ export function FinancesSection() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                {financialData.vecinosAlCorriente}/{financialData.totalVecinos}
+                {finances.vecinosAlCorriente}/{finances.totalVecinos}
               </div>
               <div className="mt-2 h-2 w-full rounded-full bg-muted">
                 <div 
                   className="h-2 rounded-full bg-accent transition-all"
-                  style={{ width: `${porcentajeAlCorriente}%` }}
+                  style={{ width: `${Math.min(100, Math.max(0, porcentajeAlCorriente))}%` }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -115,7 +169,7 @@ export function FinancesSection() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent">+8%</div>
+              <div className="text-3xl font-bold text-accent">{finances.tendencia}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 vs. mes anterior
               </p>
@@ -128,21 +182,21 @@ export function FinancesSection() {
           <CardHeader>
             <CardTitle>Desglose Mensual</CardTitle>
             <CardDescription>
-              Recaudación de los últimos 6 meses • Actualizado: {financialData.ultimaActualizacion}
+              Recaudación del periodo • Actualizado: {finances.ultimaActualizacion}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {monthlyData.map((item) => (
-                <div key={item.mes} className="flex items-center gap-4">
-                  <div className="w-24 text-sm font-medium text-foreground">
+              {finances.monthlyData.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-4">
+                  <div className="w-28 text-sm font-medium text-foreground">
                     {item.mes}
                   </div>
                   <div className="flex-1">
                     <div className="h-8 rounded-lg bg-muted overflow-hidden">
                       <div 
                         className="h-full bg-primary/80 rounded-lg flex items-center justify-end pr-3 transition-all"
-                        style={{ width: `${(item.monto / 96000) * 100}%` }}
+                        style={{ width: `${Math.min(100, Math.max(8, (item.monto / maxMonto) * 100))}%` }}
                       >
                         <span className="text-xs font-medium text-primary-foreground">
                           ${item.monto.toLocaleString()}
@@ -150,11 +204,14 @@ export function FinancesSection() {
                       </div>
                     </div>
                   </div>
-                  {/*<div className="w-20 text-right text-sm text-muted-foreground">
-                    {item.pagos} pagos
-                  </div>*/}
                 </div>
               ))}
+
+              {finances.monthlyData.length === 0 && (
+                <p className="text-sm text-muted-foreground italic text-center py-4">
+                  No hay desglose mensual registrado.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

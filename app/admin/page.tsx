@@ -7,7 +7,7 @@ import Image from "next/image"
 import { 
   Shield, LogOut, Upload, FileText, Megaphone, Trash2, 
   CheckCircle2, AlertCircle, Loader2, Home, FileUp, Image as ImageIcon,
-  ExternalLink, Plus, RefreshCw, Wrench, Clock, Images, Edit, X
+  ExternalLink, Plus, RefreshCw, Wrench, Clock, Images, Edit, X, DollarSign, Save
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { uploadToCloudinary } from "@/lib/cloudinary"
@@ -57,6 +57,21 @@ interface ProyectoItem {
   created_at: string
 }
 
+interface MonthlyItem {
+  mes: string
+  monto: number
+}
+
+interface FinanzasState {
+  total_recaudado: number
+  cuota_mensual: number
+  vecinos_al_corriente: number
+  total_vecinos: number
+  tendencia: string
+  ultima_actualizacion: string
+  monthly_data: MonthlyItem[]
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -94,6 +109,26 @@ export default function AdminPage() {
   const [editingProject, setEditingProject] = useState<ProyectoItem | null>(null)
   const [uploadingMorePhotosId, setUploadingMorePhotosId] = useState<string | null>(null)
   const [additionalPhotosFiles, setAdditionalPhotosFiles] = useState<FileList | null>(null)
+
+  // Form state for Finanzas
+  const [finanzasData, setFinanzasData] = useState<FinanzasState>({
+    total_recaudado: 1643830,
+    cuota_mensual: 850,
+    vecinos_al_corriente: 58,
+    total_vecinos: 64,
+    tendencia: "+8%",
+    ultima_actualizacion: "Marzo 2026",
+    monthly_data: [
+      { mes: "Octubre", monto: 85200 },
+      { mes: "Noviembre", monto: 85200 },
+      { mes: "Diciembre", monto: 85200 },
+      { mes: "Enero", monto: 85200 },
+      { mes: "Febrero", monto: 85200 },
+      { mes: "Marzo", monto: 85200 },
+    ],
+  })
+  const [savingFinanzas, setSavingFinanzas] = useState(false)
+  const [finanzasMsg, setFinanzasMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   // Data lists
   const [comunicadosList, setComunicadosList] = useState<ComunicadoItem[]>([])
@@ -141,9 +176,26 @@ export default function AdminPage() {
         .select("*")
         .order("created_at", { ascending: false })
 
+      const { data: fin } = await supabase
+        .from("finanzas")
+        .select("*")
+        .eq("id", "general")
+        .single()
+
       if (coms) setComunicadosList(coms)
       if (docs) setDocumentosList(docs)
       if (projs) setProyectosList(projs)
+      if (fin) {
+        setFinanzasData({
+          total_recaudado: fin.total_recaudado ?? 1643830,
+          cuota_mensual: fin.cuota_mensual ?? 850,
+          vecinos_al_corriente: fin.vecinos_al_corriente ?? 58,
+          total_vecinos: fin.total_vecinos ?? 64,
+          tendencia: fin.tendencia || "+8%",
+          ultima_actualizacion: fin.ultima_actualizacion || "Marzo 2026",
+          monthly_data: fin.monthly_data || [],
+        })
+      }
     } catch (err) {
       console.error("Error al cargar datos:", err)
     } finally {
@@ -334,7 +386,7 @@ export default function AdminPage() {
     }
   }
 
-  // Update existing project fields
+  // Update existing project details
   const handleUpdateProjectDetails = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingProject) return
@@ -360,6 +412,57 @@ export default function AdminPage() {
     } catch (err: any) {
       alert("Error al actualizar proyecto: " + err.message)
     }
+  }
+
+  // Save Finance Settings
+  const handleSaveFinanzas = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFinanzasMsg(null)
+    setSavingFinanzas(true)
+
+    try {
+      const { error } = await supabase
+        .from("finanzas")
+        .upsert({
+          id: "general",
+          total_recaudado: finanzasData.total_recaudado,
+          cuota_mensual: finanzasData.cuota_mensual,
+          vecinos_al_corriente: finanzasData.vecinos_al_corriente,
+          total_vecinos: finanzasData.total_vecinos,
+          tendencia: finanzasData.tendencia,
+          ultima_actualizacion: finanzasData.ultima_actualizacion,
+          monthly_data: finanzasData.monthly_data,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (error) throw new Error(error.message)
+
+      setFinanzasMsg({ type: "success", text: "¡Información financiera y desglose mensual guardados correctamente!" })
+      await loadData()
+    } catch (err: any) {
+      setFinanzasMsg({ type: "error", text: err.message || "Error al guardar información financiera." })
+    } finally {
+      setSavingFinanzas(false)
+    }
+  }
+
+  // Monthly array helpers
+  const handleMonthlyChange = (index: number, field: "mes" | "monto", value: string | number) => {
+    const updated = [...finanzasData.monthly_data]
+    updated[index] = { ...updated[index], [field]: value }
+    setFinanzasData({ ...finanzasData, monthly_data: updated })
+  }
+
+  const handleAddMonthlyItem = () => {
+    setFinanzasData({
+      ...finanzasData,
+      monthly_data: [...finanzasData.monthly_data, { mes: "Nuevo Mes", monto: 85200 }],
+    })
+  }
+
+  const handleRemoveMonthlyItem = (index: number) => {
+    const updated = finanzasData.monthly_data.filter((_, i) => i !== index)
+    setFinanzasData({ ...finanzasData, monthly_data: updated })
   }
 
   // Delete Project
@@ -451,20 +554,24 @@ export default function AdminPage() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <Tabs defaultValue="comunicado" className="space-y-6">
-          <TabsList className="grid grid-cols-4 max-w-3xl bg-muted p-1 rounded-xl">
-            <TabsTrigger value="comunicado" className="gap-2 text-xs sm:text-sm">
+          <TabsList className="grid grid-cols-5 max-w-4xl bg-muted p-1 rounded-xl">
+            <TabsTrigger value="comunicado" className="gap-1.5 text-xs sm:text-sm">
               <Megaphone className="h-4 w-4" />
               <span>Comunicados</span>
             </TabsTrigger>
-            <TabsTrigger value="documento" className="gap-2 text-xs sm:text-sm">
+            <TabsTrigger value="documento" className="gap-1.5 text-xs sm:text-sm">
               <FileUp className="h-4 w-4" />
               <span>Documentos</span>
             </TabsTrigger>
-            <TabsTrigger value="obras" className="gap-2 text-xs sm:text-sm">
-              <Wrench className="h-4 w-4" />
-              <span>Obras y Galerías</span>
+            <TabsTrigger value="finanzas" className="gap-1.5 text-xs sm:text-sm">
+              <DollarSign className="h-4 w-4" />
+              <span>Finanzas</span>
             </TabsTrigger>
-            <TabsTrigger value="gestion" className="gap-2 text-xs sm:text-sm">
+            <TabsTrigger value="obras" className="gap-1.5 text-xs sm:text-sm">
+              <Wrench className="h-4 w-4" />
+              <span>Obras</span>
+            </TabsTrigger>
+            <TabsTrigger value="gestion" className="gap-1.5 text-xs sm:text-sm">
               <FileText className="h-4 w-4" />
               <span>Publicaciones</span>
             </TabsTrigger>
@@ -673,7 +780,177 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          {/* TAB 3: Obras y Galerías */}
+          {/* TAB 3: Gestión Financiera */}
+          <TabsContent value="finanzas">
+            <Card className="shadow-lg border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  Gestión del Estado de Cuotas y Desglose Mensual
+                </CardTitle>
+                <CardDescription>
+                  Modifica los valores del resumen de finanzas y actualiza los meses y montos recabados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {finanzasMsg && (
+                  <Alert
+                    variant={finanzasMsg.type === "success" ? "default" : "destructive"}
+                    className="mb-6"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <AlertTitle>{finanzasMsg.type === "success" ? "Finanzas Actualizadas" : "Error"}</AlertTitle>
+                    <AlertDescription>{finanzasMsg.text}</AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleSaveFinanzas} className="space-y-8">
+                  {/* Sección 1: Métricas Generales */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg text-foreground border-b pb-2">
+                      1. Valores del Estado de Cuotas
+                    </h3>
+                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-recaudado">Total Recaudado ($)</Label>
+                        <Input
+                          id="fin-recaudado"
+                          type="number"
+                          value={finanzasData.total_recaudado}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, total_recaudado: parseFloat(e.target.value) || 0 })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-cuota">Cuota Mensual ($)</Label>
+                        <Input
+                          id="fin-cuota"
+                          type="number"
+                          value={finanzasData.cuota_mensual}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, cuota_mensual: parseFloat(e.target.value) || 0 })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-corriente">Vecinos al Corriente</Label>
+                        <Input
+                          id="fin-corriente"
+                          type="number"
+                          value={finanzasData.vecinos_al_corriente}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, vecinos_al_corriente: parseInt(e.target.value, 10) || 0 })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-total-vecinos">Total de Vecinos / Viviendas</Label>
+                        <Input
+                          id="fin-total-vecinos"
+                          type="number"
+                          value={finanzasData.total_vecinos}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, total_vecinos: parseInt(e.target.value, 10) || 0 })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-tendencia">Tendencia (ej: +8%)</Label>
+                        <Input
+                          id="fin-tendencia"
+                          value={finanzasData.tendencia}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, tendencia: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fin-update">Texto de Última Actualización</Label>
+                        <Input
+                          id="fin-update"
+                          placeholder="Marzo 2026"
+                          value={finanzasData.ultima_actualizacion}
+                          onChange={(e) => setFinanzasData({ ...finanzasData, ultima_actualizacion: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sección 2: Desglose Mensual */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="font-semibold text-lg text-foreground">
+                        2. Desglose Mensual (Meses y Montos Recaudados)
+                      </h3>
+                      <Button type="button" variant="outline" size="sm" onClick={handleAddMonthlyItem} className="gap-1.5 text-xs">
+                        <Plus className="h-3.5 w-3.5" /> Agregar Mes
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {finanzasData.monthly_data.map((item, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl border">
+                          <div className="flex-1 grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Nombre del Mes</Label>
+                              <Input
+                                value={item.mes}
+                                onChange={(e) => handleMonthlyChange(index, "mes", e.target.value)}
+                                placeholder="Ej: Octubre"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Monto Recaudado ($)</Label>
+                              <Input
+                                type="number"
+                                value={item.monto}
+                                onChange={(e) => handleMonthlyChange(index, "monto", parseFloat(e.target.value) || 0)}
+                                placeholder="85200"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10 shrink-0 mt-4"
+                            onClick={() => handleRemoveMonthlyItem(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+
+                      {finanzasData.monthly_data.length === 0 && (
+                        <p className="text-xs text-muted-foreground italic py-2">
+                          No hay meses configurados. Haz clic en &quot;Agregar Mes&quot; para registrar uno.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="gap-2" disabled={savingFinanzas}>
+                    {savingFinanzas ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Guardando cambios...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Guardar Información Financiera
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 4: Obras y Galerías */}
           <TabsContent value="obras" className="space-y-8">
             {/* Formulario para Crear Obra */}
             <Card className="shadow-lg border-border/60">
@@ -1021,7 +1298,7 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          {/* TAB 4: Gestionar Publicaciones Existentes */}
+          {/* TAB 5: Gestionar Publicaciones Existentes */}
           <TabsContent value="gestion">
             <Card className="shadow-lg border-border/60">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
