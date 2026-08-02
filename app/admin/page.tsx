@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { 
   Shield, LogOut, Upload, FileText, Megaphone, Trash2, 
   CheckCircle2, AlertCircle, Loader2, Home, FileUp, Image as ImageIcon,
-  ExternalLink, Plus, RefreshCw
+  ExternalLink, Plus, RefreshCw, Wrench, Clock, Images, Edit, X
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { uploadToCloudinary } from "@/lib/cloudinary"
@@ -19,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface ComunicadoItem {
   id: string
@@ -39,6 +41,19 @@ interface DocumentoItem {
   file_url: string
   file_type?: string
   file_name?: string
+  created_at: string
+}
+
+interface ProyectoItem {
+  id: string
+  title: string
+  description?: string
+  status: string
+  progress: number
+  budget: number
+  start_date?: string
+  estimated_end?: string
+  images: string[]
   created_at: string
 }
 
@@ -63,9 +78,27 @@ export default function AdminPage() {
   const [submittingDoc, setSubmittingDoc] = useState(false)
   const [docMsg, setDocMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
+  // Form states for Proyecto / Obra
+  const [projectTitle, setProjectTitle] = useState("")
+  const [projectDesc, setProjectDesc] = useState("")
+  const [projectStatus, setProjectStatus] = useState("en_proceso")
+  const [projectProgress, setProjectProgress] = useState("0")
+  const [projectBudget, setProjectBudget] = useState("")
+  const [projectStartDate, setProjectStartDate] = useState("Marzo 2026")
+  const [projectEstEnd, setProjectEstEnd] = useState("Pendiente")
+  const [projectFiles, setProjectFiles] = useState<FileList | null>(null)
+  const [submittingProject, setSubmittingProject] = useState(false)
+  const [projectMsg, setProjectMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Edit Project state
+  const [editingProject, setEditingProject] = useState<ProyectoItem | null>(null)
+  const [uploadingMorePhotosId, setUploadingMorePhotosId] = useState<string | null>(null)
+  const [additionalPhotosFiles, setAdditionalPhotosFiles] = useState<FileList | null>(null)
+
   // Data lists
   const [comunicadosList, setComunicadosList] = useState<ComunicadoItem[]>([])
   const [documentosList, setDocumentosList] = useState<DocumentoItem[]>([])
+  const [proyectosList, setProyectosList] = useState<ProyectoItem[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -103,8 +136,14 @@ export default function AdminPage() {
         .select("*")
         .order("created_at", { ascending: false })
 
+      const { data: projs } = await supabase
+        .from("proyectos")
+        .select("*")
+        .order("created_at", { ascending: false })
+
       if (coms) setComunicadosList(coms)
       if (docs) setDocumentosList(docs)
+      if (projs) setProyectosList(projs)
     } catch (err) {
       console.error("Error al cargar datos:", err)
     } finally {
@@ -200,7 +239,145 @@ export default function AdminPage() {
     }
   }
 
-  // Handle Deleting Comunicado
+  // Handle Proyecto / Obra Submission
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProjectMsg(null)
+    setSubmittingProject(true)
+
+    try {
+      const imageUrls: string[] = []
+
+      if (projectFiles && projectFiles.length > 0) {
+        for (let i = 0; i < projectFiles.length; i++) {
+          const res = await uploadToCloudinary(projectFiles[i])
+          imageUrls.push(res.secure_url)
+        }
+      }
+
+      const { error } = await supabase.from("proyectos").insert([
+        {
+          title: projectTitle,
+          description: projectDesc,
+          status: projectStatus,
+          progress: parseInt(projectProgress, 10) || 0,
+          budget: parseFloat(projectBudget) || 0,
+          start_date: projectStartDate,
+          estimated_end: projectEstEnd,
+          images: imageUrls,
+        },
+      ])
+
+      if (error) throw new Error(error.message)
+
+      setProjectMsg({ type: "success", text: "¡Obra / Proyecto creado exitosamente con sus imágenes!" })
+      setProjectTitle("")
+      setProjectDesc("")
+      setProjectProgress("0")
+      setProjectBudget("")
+      setProjectFiles(null)
+      await loadData()
+    } catch (err: any) {
+      setProjectMsg({ type: "error", text: err.message || "Error al registrar la obra." })
+    } finally {
+      setSubmittingProject(false)
+    }
+  }
+
+  // Add photos to existing project gallery
+  const handleAddPhotosToProject = async (projectId: string, currentImages: string[]) => {
+    if (!additionalPhotosFiles || additionalPhotosFiles.length === 0) return
+    setUploadingMorePhotosId(projectId)
+
+    try {
+      const newUrls: string[] = []
+      for (let i = 0; i < additionalPhotosFiles.length; i++) {
+        const res = await uploadToCloudinary(additionalPhotosFiles[i])
+        newUrls.push(res.secure_url)
+      }
+
+      const updatedImages = [...currentImages, ...newUrls]
+
+      const { error } = await supabase
+        .from("proyectos")
+        .update({ images: updatedImages })
+        .eq("id", projectId)
+
+      if (error) throw new Error(error.message)
+
+      setAdditionalPhotosFiles(null)
+      await loadData()
+    } catch (err: any) {
+      alert("Error al agregar fotos: " + err.message)
+    } finally {
+      setUploadingMorePhotosId(null)
+    }
+  }
+
+  // Remove photo from gallery
+  const handleRemovePhotoFromProject = async (projectId: string, imageToDelete: string, currentImages: string[]) => {
+    if (!confirm("¿Deseas eliminar esta foto de la galería?")) return
+
+    try {
+      const updatedImages = currentImages.filter((img) => img !== imageToDelete)
+
+      const { error } = await supabase
+        .from("proyectos")
+        .update({ images: updatedImages })
+        .eq("id", projectId)
+
+      if (error) throw new Error(error.message)
+
+      await loadData()
+    } catch (err: any) {
+      alert("Error al eliminar la foto: " + err.message)
+    }
+  }
+
+  // Update existing project fields
+  const handleUpdateProjectDetails = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingProject) return
+
+    try {
+      const { error } = await supabase
+        .from("proyectos")
+        .update({
+          title: editingProject.title,
+          description: editingProject.description,
+          status: editingProject.status,
+          progress: editingProject.progress,
+          budget: editingProject.budget,
+          start_date: editingProject.start_date,
+          estimated_end: editingProject.estimated_end,
+        })
+        .eq("id", editingProject.id)
+
+      if (error) throw new Error(error.message)
+
+      setEditingProject(null)
+      await loadData()
+    } catch (err: any) {
+      alert("Error al actualizar proyecto: " + err.message)
+    }
+  }
+
+  // Delete Project
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar esta obra? Se eliminarán también sus referencias.")) return
+    setDeletingId(id)
+    try {
+      const { error } = await supabase.from("proyectos").delete().eq("id", id)
+      if (error) throw new Error(error.message)
+      await loadData()
+    } catch (err: any) {
+      alert("Error al eliminar: " + err.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  // Delete Comunicado
   const handleDeleteComunicado = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este comunicado?")) return
     setDeletingId(id)
@@ -215,7 +392,7 @@ export default function AdminPage() {
     }
   }
 
-  // Handle Deleting Document
+  // Delete Document
   const handleDeleteDocument = async (id: string) => {
     if (!confirm("¿Estás seguro de eliminar este documento?")) return
     setDeletingId(id)
@@ -274,18 +451,22 @@ export default function AdminPage() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <Tabs defaultValue="comunicado" className="space-y-6">
-          <TabsList className="grid grid-cols-3 max-w-2xl bg-muted p-1 rounded-xl">
-            <TabsTrigger value="comunicado" className="gap-2">
+          <TabsList className="grid grid-cols-4 max-w-3xl bg-muted p-1 rounded-xl">
+            <TabsTrigger value="comunicado" className="gap-2 text-xs sm:text-sm">
               <Megaphone className="h-4 w-4" />
-              <span>Publicar Comunicado</span>
+              <span>Comunicados</span>
             </TabsTrigger>
-            <TabsTrigger value="documento" className="gap-2">
+            <TabsTrigger value="documento" className="gap-2 text-xs sm:text-sm">
               <FileUp className="h-4 w-4" />
-              <span>Subir Documento</span>
+              <span>Documentos</span>
             </TabsTrigger>
-            <TabsTrigger value="gestion" className="gap-2">
+            <TabsTrigger value="obras" className="gap-2 text-xs sm:text-sm">
+              <Wrench className="h-4 w-4" />
+              <span>Obras y Galerías</span>
+            </TabsTrigger>
+            <TabsTrigger value="gestion" className="gap-2 text-xs sm:text-sm">
               <FileText className="h-4 w-4" />
-              <span>Gestionar ({comunicadosList.length + documentosList.length})</span>
+              <span>Publicaciones</span>
             </TabsTrigger>
           </TabsList>
 
@@ -365,18 +546,13 @@ export default function AdminPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="com-file">Adjuntar Archivo (Opcional - Imagen o Documento PDF)</Label>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        id="com-file"
-                        type="file"
-                        accept="image/*,application/pdf,.doc,.docx"
-                        onChange={(e) => setComunicadoFile(e.target.files?.[0] || null)}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Puedes subir fotos de avances de obra, comprobantes, o convocatorias en formato PDF o formato de imagen.
-                    </p>
+                    <Input
+                      id="com-file"
+                      type="file"
+                      accept="image/*,application/pdf,.doc,.docx"
+                      onChange={(e) => setComunicadoFile(e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
                   </div>
 
                   <Button type="submit" className="gap-2" disabled={submittingComunicado}>
@@ -497,7 +673,355 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          {/* TAB 3: Gestionar Publicaciones */}
+          {/* TAB 3: Obras y Galerías */}
+          <TabsContent value="obras" className="space-y-8">
+            {/* Formulario para Crear Obra */}
+            <Card className="shadow-lg border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Wrench className="h-5 w-5 text-primary" />
+                  Registrar Nueva Obra / Proyecto
+                </CardTitle>
+                <CardDescription>
+                  Crea una nueva obra con su galería de imágenes para mostrar avances a los residentes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {projectMsg && (
+                  <Alert
+                    variant={projectMsg.type === "success" ? "default" : "destructive"}
+                    className="mb-6"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <AlertTitle>{projectMsg.type === "success" ? "Obra Registrada" : "Error"}</AlertTitle>
+                    <AlertDescription>{projectMsg.text}</AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleCreateProject} className="space-y-5">
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-title">Nombre de la Obra *</Label>
+                      <Input
+                        id="proj-title"
+                        placeholder="Ej: Remodelación de Área de Juegos Infantiles"
+                        value={projectTitle}
+                        onChange={(e) => setProjectTitle(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-status">Estado de la Obra</Label>
+                      <Select value={projectStatus} onValueChange={setProjectStatus}>
+                        <SelectTrigger id="proj-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en_proceso">En Proceso</SelectItem>
+                          <SelectItem value="programado">Programado</SelectItem>
+                          <SelectItem value="completado">Completado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="proj-desc">Descripción del Proyecto</Label>
+                    <Textarea
+                      id="proj-desc"
+                      placeholder="Detalles sobre lo que contempla esta obra o proyecto..."
+                      rows={3}
+                      value={projectDesc}
+                      onChange={(e) => setProjectDesc(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid gap-5 sm:grid-cols-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-prog">Progreso (%)</Label>
+                      <Input
+                        id="proj-prog"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={projectProgress}
+                        onChange={(e) => setProjectProgress(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-bud">Presupuesto ($)</Label>
+                      <Input
+                        id="proj-bud"
+                        type="number"
+                        placeholder="85000"
+                        value={projectBudget}
+                        onChange={(e) => setProjectBudget(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-start">Fecha Inicio</Label>
+                      <Input
+                        id="proj-start"
+                        placeholder="Marzo 2026"
+                        value={projectStartDate}
+                        onChange={(e) => setProjectStartDate(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="proj-end">Fecha Término</Label>
+                      <Input
+                        id="proj-end"
+                        placeholder="Mayo 2026"
+                        value={projectEstEnd}
+                        onChange={(e) => setProjectEstEnd(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="proj-files">Fotos Iniciales de la Galería (Selecciona una o varias imágenes)</Label>
+                    <Input
+                      id="proj-files"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => setProjectFiles(e.target.files)}
+                      className="cursor-pointer"
+                    />
+                  </div>
+
+                  <Button type="submit" className="gap-2" disabled={submittingProject}>
+                    {submittingProject ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Subiendo fotos y guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4" />
+                        Crear Obra con Galería
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Lista y Edición de Obras Registradas */}
+            <Card className="shadow-lg border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl">Obras Registradas y sus Galerías ({proyectosList.length})</CardTitle>
+                  <CardDescription>
+                    Administra el porcentaje de avance, agrega fotos adicionales a la galería o elimina fotos antiguas.
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={loadData} disabled={loadingData}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loadingData ? "animate-spin" : ""}`} />
+                  Actualizar
+                </Button>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                {proyectosList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic py-4">
+                    No hay obras registradas dinámicamente aún.
+                  </p>
+                ) : (
+                  <div className="space-y-6">
+                    {proyectosList.map((proj) => (
+                      <div
+                        key={proj.id}
+                        className="p-5 rounded-2xl bg-card border shadow-sm space-y-4"
+                      >
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge className={
+                                proj.status === "en_proceso" ? "bg-primary" :
+                                proj.status === "completado" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                              }>
+                                {proj.status === "en_proceso" ? "En Proceso" : proj.status === "completado" ? "Completado" : "Programado"}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">Progreso: {proj.progress}%</span>
+                            </div>
+                            <h3 className="font-bold text-lg text-foreground">{proj.title}</h3>
+                            <p className="text-sm text-muted-foreground">{proj.description}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Edit Obra Modal Trigger */}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditingProject(proj)}
+                                >
+                                  <Edit className="h-4 w-4 mr-1" /> Editar Datos
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Editar Datos de la Obra</DialogTitle>
+                                  <DialogDescription>
+                                    Modifica el porcentaje de avance, presupuesto o estado.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                {editingProject && (
+                                  <form onSubmit={handleUpdateProjectDetails} className="space-y-4 pt-2">
+                                    <div>
+                                      <Label>Título</Label>
+                                      <Input
+                                        value={editingProject.title}
+                                        onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
+                                        required
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Descripción</Label>
+                                      <Textarea
+                                        value={editingProject.description || ""}
+                                        onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label>Estado</Label>
+                                        <Select
+                                          value={editingProject.status}
+                                          onValueChange={(val) => setEditingProject({ ...editingProject, status: val })}
+                                        >
+                                          <SelectTrigger><SelectValue /></SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="en_proceso">En Proceso</SelectItem>
+                                            <SelectItem value="programado">Programado</SelectItem>
+                                            <SelectItem value="completado">Completado</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div>
+                                        <Label>Progreso (%)</Label>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          value={editingProject.progress}
+                                          onChange={(e) => setEditingProject({ ...editingProject, progress: parseInt(e.target.value, 10) || 0 })}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label>Presupuesto ($)</Label>
+                                        <Input
+                                          type="number"
+                                          value={editingProject.budget}
+                                          onChange={(e) => setEditingProject({ ...editingProject, budget: parseFloat(e.target.value) || 0 })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label>Fechas</Label>
+                                        <Input
+                                          value={editingProject.start_date || ""}
+                                          onChange={(e) => setEditingProject({ ...editingProject, start_date: e.target.value })}
+                                        />
+                                      </div>
+                                    </div>
+                                    <Button type="submit" className="w-full">Guardar Cambios</Button>
+                                  </form>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteProject(proj.id)}
+                              disabled={deletingId === proj.id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar Preview */}
+                        <div className="space-y-1">
+                          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all"
+                              style={{ width: `${proj.progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Gallery Section */}
+                        <div className="pt-3 border-t">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                              <Images className="h-4 w-4 text-primary" />
+                              Galería de Fotos ({proj.images?.length || 0})
+                            </h4>
+                          </div>
+
+                          {/* Thumbnails grid */}
+                          <div className="flex flex-wrap gap-3 mb-4">
+                            {proj.images?.map((imgUrl, idx) => (
+                              <div key={idx} className="relative group w-24 h-20 rounded-lg overflow-hidden border">
+                                <Image src={imgUrl} alt="Foto de la obra" fill className="object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemovePhotoFromProject(proj.id, imgUrl, proj.images)}
+                                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Eliminar foto de la galería"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+
+                            {(!proj.images || proj.images.length === 0) && (
+                              <p className="text-xs text-muted-foreground italic">No hay fotos en esta galería.</p>
+                            )}
+                          </div>
+
+                          {/* Add photos form */}
+                          <div className="flex items-center gap-3 bg-muted/30 p-3 rounded-xl">
+                            <Input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="text-xs cursor-pointer bg-background"
+                              onChange={(e) => setAdditionalPhotosFiles(e.target.files)}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleAddPhotosToProject(proj.id, proj.images || [])}
+                              disabled={uploadingMorePhotosId === proj.id}
+                              className="gap-1 text-xs shrink-0"
+                            >
+                              {uploadingMorePhotosId === proj.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5" />
+                              )}
+                              Agregar Fotos
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 4: Gestionar Publicaciones Existentes */}
           <TabsContent value="gestion">
             <Card className="shadow-lg border-border/60">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
