@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Wrench, Clock, CheckCircle2, X, ChevronLeft, ChevronRight, Images } from "lucide-react"
+import { Wrench, Clock, CheckCircle2, X, ChevronLeft, ChevronRight, Images, HardHat } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,53 +21,6 @@ interface Project {
   estimated_end?: string
   images: string[]
 }
-
-const staticProjects: Project[] = [
-  {
-    id: 1,
-    title: "Construcción de bodega",
-    description: "Bodega para material de mantenimiento y mobiliario",
-    status: "programado",
-    progress: 0,
-    budget: 45000,
-    startDate: "Pendiente",
-    estimatedEnd: "Pendiente",
-    images: ["/images/bodega.jpg"],
-  },
-  {
-    id: 2,
-    title: "Remodelación de Área de Juegos",
-    description: "Recolección y remodelación de juegos infantiles.",
-    status: "en_proceso",
-    progress: 10,
-    budget: 85000,
-    startDate: "Marzo 2026",
-    estimatedEnd: "Pendiente",
-    images: ["/images/Juegos.jpg"],
-  },
-  {
-    id: 3,
-    title: "Instalación de césped sintético en área de juego/terraza",
-    description: "Reemplazo de césped natural por césped sintético en área de juego/terraza",
-    status: "programado",
-    progress: 0,
-    budget: 28000,
-    startDate: "Pendiente",
-    estimatedEnd: "Pendiente",
-    images: ["/images/cesped.jpg"],
-  },
-  {
-    id: 4,
-    title: "Instalación de césped sintético en cenefas",
-    description: "Reemplazo de césped natural por césped sintético en cenefas.",
-    status: "programado",
-    progress: 0,
-    budget: 62000,
-    startDate: "Pendiente",
-    estimatedEnd: "Pendiente",
-    images: ["/images/cesped.jpg"],
-  },
-]
 
 const statusConfig = {
   en_proceso: {
@@ -110,14 +63,11 @@ export function ProjectsSection() {
           .select("*")
           .order("created_at", { ascending: false })
 
-        if (error || !data || data.length === 0) {
-          setProjectsList(staticProjects)
-        } else {
+        if (data) {
           setProjectsList(data)
         }
       } catch (err) {
-        console.warn("Usando obras informativas locales:", err)
-        setProjectsList(staticProjects)
+        console.error("Error cargando proyectos:", err)
       } finally {
         setLoading(false)
       }
@@ -129,7 +79,7 @@ export function ProjectsSection() {
   const currentProject = projectsList.find((p) => p.id === gallery.projectId)
   const currentImages = currentProject?.images && currentProject.images.length > 0 
     ? currentProject.images 
-    : ["/images/Juegos.jpg"]
+    : []
 
   const openGallery = (projectId: string | number) => {
     setGallery({ isOpen: true, projectId, currentIndex: 0 })
@@ -178,111 +128,138 @@ export function ProjectsSection() {
             </p>
           </div>
 
+          {/* Empty State when no projects exist */}
+          {!loading && projectsList.length === 0 && (
+            <Card className="max-w-xl mx-auto border-0 shadow-lg text-center p-8 bg-card">
+              <div className="h-16 w-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                <HardHat className="h-8 w-8" />
+              </div>
+              <CardTitle className="text-xl">Sin Obras Registradas Actualmente</CardTitle>
+              <CardDescription className="mt-2">
+                Los nuevos proyectos y avances de obras publicados por la Mesa Directiva aparecerán en esta sección.
+              </CardDescription>
+            </Card>
+          )}
+
           {/* Projects Grid */}
-          <div className="grid gap-6 md:grid-cols-2">
-            {projectsList.map((project) => {
-              const statusKey = (project.status in statusConfig ? project.status : "en_proceso") as keyof typeof statusConfig
-              const status = statusConfig[statusKey]
-              const StatusIcon = status.icon
-              const displayImage = project.images && project.images.length > 0 ? project.images[0] : "/images/Juegos.jpg"
-              const imagesCount = project.images ? project.images.length : 1
+          {projectsList.length > 0 && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {projectsList.map((project) => {
+                const statusKey = (project.status in statusConfig ? project.status : "en_proceso") as keyof typeof statusConfig
+                const status = statusConfig[statusKey]
+                const StatusIcon = status.icon
+                const displayImage = project.images && project.images.length > 0 ? project.images[0] : null
+                const imagesCount = project.images ? project.images.length : 0
 
-              const startDateDisplay = project.startDate || project.start_date || "Pendiente"
-              const estimatedEndDisplay = project.estimatedEnd || project.estimated_end || "Pendiente"
+                const startDateDisplay = project.startDate || project.start_date || "Pendiente"
+                const estimatedEndDisplay = project.estimatedEnd || project.estimated_end || "Pendiente"
 
-              return (
-                <Card key={project.id} className="border-0 shadow-lg overflow-hidden flex flex-col justify-between">
-                  <div>
-                    <div 
-                      className="relative h-52 w-full cursor-pointer group bg-muted"
-                      onClick={() => openGallery(project.id)}
-                    >
-                      <Image
-                        src={displayImage}
-                        alt={project.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-background/90 text-foreground px-4 py-2 rounded-full shadow-lg text-xs font-semibold">
-                          <Images className="h-4 w-4" />
-                          <span>Ver galería ({imagesCount} {imagesCount === 1 ? "foto" : "fotos"})</span>
+                return (
+                  <Card key={project.id} className="border-0 shadow-lg overflow-hidden flex flex-col justify-between">
+                    <div>
+                      {displayImage ? (
+                        <div 
+                          className="relative h-52 w-full cursor-pointer group bg-muted"
+                          onClick={() => openGallery(project.id)}
+                        >
+                          <Image
+                            src={displayImage}
+                            alt={project.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-background/90 text-foreground px-4 py-2 rounded-full shadow-lg text-xs font-semibold">
+                              <Images className="h-4 w-4" />
+                              <span>Ver galería ({imagesCount} {imagesCount === 1 ? "foto" : "fotos"})</span>
+                            </div>
+                          </div>
+                          <div className="absolute top-3 right-3">
+                            <Badge className={status.className}>
+                              <StatusIcon className="mr-1 h-3 w-3" />
+                              {status.label}
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative h-24 w-full bg-muted/60 p-4 flex items-center justify-between border-b">
+                          <span className="text-xs text-muted-foreground italic">Sin imágenes de galería</span>
+                          <Badge className={status.className}>
+                            <StatusIcon className="mr-1 h-3 w-3" />
+                            {status.label}
+                          </Badge>
+                        </div>
+                      )}
+
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl">{project.title}</CardTitle>
+                        {project.description && (
+                          <CardDescription className="mt-2 leading-relaxed">
+                            {project.description}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                    </div>
+
+                    <CardContent>
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">Progreso</span>
+                          <span className="text-sm font-medium text-foreground">{project.progress}%</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-muted">
+                          <div 
+                            className="h-2 rounded-full bg-primary transition-all"
+                            style={{ width: `${Math.min(100, Math.max(0, project.progress))}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="absolute top-3 right-3">
-                        <Badge className={status.className}>
-                          <StatusIcon className="mr-1 h-3 w-3" />
-                          {status.label}
-                        </Badge>
-                      </div>
-                    </div>
 
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl">{project.title}</CardTitle>
-                      {project.description && (
-                        <CardDescription className="mt-2 leading-relaxed">
-                          {project.description}
-                        </CardDescription>
-                      )}
-                    </CardHeader>
-                  </div>
-
-                  <CardContent>
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Progreso</span>
-                        <span className="text-sm font-medium text-foreground">{project.progress}%</span>
+                      {/* Details */}
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Presupuesto</p>
+                          <p className="text-sm font-semibold text-foreground mt-1">
+                            ${Number(project.budget || 0).toLocaleString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Período</p>
+                          <p className="text-sm font-semibold text-foreground mt-1">
+                            {startDateDisplay} - {estimatedEndDisplay}
+                          </p>
+                        </div>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-muted">
-                        <div 
-                          className="h-2 rounded-full bg-primary transition-all"
-                          style={{ width: `${Math.min(100, Math.max(0, project.progress))}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Details */}
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Presupuesto</p>
-                        <p className="text-sm font-semibold text-foreground mt-1">
-                          ${Number(project.budget || 0).toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Período</p>
-                        <p className="text-sm font-semibold text-foreground mt-1">
-                          {startDateDisplay} - {estimatedEndDisplay}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
 
           {/* Summary */}
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
-            <Card className="border-0 shadow-md bg-card text-center py-6">
-              <div className="text-3xl font-bold text-primary">{inProgressCount}</div>
-              <p className="text-sm text-muted-foreground mt-1">Obras en proceso</p>
-            </Card>
-            <Card className="border-0 shadow-md bg-card text-center py-6">
-              <div className="text-3xl font-bold text-foreground">{scheduledCount}</div>
-              <p className="text-sm text-muted-foreground mt-1">Obras programadas</p>
-            </Card>
-            <Card className="border-0 shadow-md bg-card text-center py-6">
-              <div className="text-3xl font-bold text-accent">{completedCount}</div>
-              <p className="text-sm text-muted-foreground mt-1">Obras completadas</p>
-            </Card>
-          </div>
+          {projectsList.length > 0 && (
+            <div className="mt-12 grid gap-6 sm:grid-cols-3">
+              <Card className="border-0 shadow-md bg-card text-center py-6">
+                <div className="text-3xl font-bold text-primary">{inProgressCount}</div>
+                <p className="text-sm text-muted-foreground mt-1">Obras en proceso</p>
+              </Card>
+              <Card className="border-0 shadow-md bg-card text-center py-6">
+                <div className="text-3xl font-bold text-foreground">{scheduledCount}</div>
+                <p className="text-sm text-muted-foreground mt-1">Obras programadas</p>
+              </Card>
+              <Card className="border-0 shadow-md bg-card text-center py-6">
+                <div className="text-3xl font-bold text-accent">{completedCount}</div>
+                <p className="text-sm text-muted-foreground mt-1">Obras completadas</p>
+              </Card>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Gallery Modal */}
-      {gallery.isOpen && currentProject && (
+      {gallery.isOpen && currentProject && currentImages.length > 0 && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
           onClick={closeGallery}
