@@ -160,31 +160,43 @@ export default function AdminPage() {
 
   const loadData = async () => {
     setLoadingData(true)
+
     try {
       const { data: coms } = await supabase
         .from("comunicados")
         .select("*")
         .order("created_at", { ascending: false })
+      if (coms) setComunicadosList(coms)
+    } catch (err) {
+      console.warn("Error cargando comunicados:", err)
+    }
 
+    try {
       const { data: docs } = await supabase
         .from("documentos")
         .select("*")
         .order("created_at", { ascending: false })
+      if (docs) setDocumentosList(docs)
+    } catch (err) {
+      console.warn("Error cargando documentos:", err)
+    }
 
+    try {
       const { data: projs } = await supabase
         .from("proyectos")
         .select("*")
         .order("created_at", { ascending: false })
+      if (projs) setProyectosList(projs)
+    } catch (err) {
+      console.warn("Error cargando proyectos:", err)
+    }
 
+    try {
       const { data: fin } = await supabase
         .from("finanzas")
         .select("*")
         .eq("id", "general")
-        .single()
-
-      if (coms) setComunicadosList(coms)
-      if (docs) setDocumentosList(docs)
-      if (projs) setProyectosList(projs)
+        .maybeSingle()
       if (fin) {
         setFinanzasData({
           total_recaudado: fin.total_recaudado ?? 1643830,
@@ -197,7 +209,7 @@ export default function AdminPage() {
         })
       }
     } catch (err) {
-      console.error("Error al cargar datos:", err)
+      console.warn("Error cargando finanzas:", err)
     } finally {
       setLoadingData(false)
     }
