@@ -6,7 +6,10 @@ export interface CloudinaryUploadResult {
   original_filename: string
 }
 
-export async function uploadToCloudinary(file: File): Promise<CloudinaryUploadResult> {
+export async function uploadToCloudinary(
+  file: File,
+  customResourceType?: "image" | "raw" | "auto"
+): Promise<CloudinaryUploadResult> {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "savia_preset"
 
@@ -14,12 +17,20 @@ export async function uploadToCloudinary(file: File): Promise<CloudinaryUploadRe
     throw new Error("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME no está configurada en las variables de entorno.")
   }
 
+  // Automatically select resource_type:
+  // Images (png, jpg, webp, gif, svg) -> "image"
+  // PDFs, Documents (pdf, doc, docx, xls, zip) -> "raw"
+  let resourceType = customResourceType
+  if (!resourceType) {
+    const isImage = file.type.startsWith("image/")
+    resourceType = isImage ? "image" : "raw"
+  }
+
   const formData = new FormData()
   formData.append("file", file)
   formData.append("upload_preset", uploadPreset)
 
-  // 'auto' detects image, raw file (pdf, doc), video, etc.
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
     method: "POST",
     body: formData,
   })
