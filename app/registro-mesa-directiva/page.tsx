@@ -39,10 +39,13 @@ export default function RegisterMesaDirectivaPage() {
     setLoading(true)
 
     try {
+      const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : undefined
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName.trim(),
             role: "admin",
