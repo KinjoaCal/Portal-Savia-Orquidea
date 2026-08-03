@@ -87,10 +87,7 @@ export function BoardSection() {
           <Card className="inline-block border-0 shadow-lg bg-primary text-primary-foreground px-8 py-6">
             <p className="text-lg font-semibold">¿Tienes alguna inquietud?</p>
             <p className="text-sm opacity-90 mt-1">
-              Contáctanos en{" "}
-              <a href="mailto:mesa@losjardines.com" className="underline hover:no-underline">
-                savia@orquidea.com
-              </a>
+              Contactate con Administración via whatsapp
             </p>
           </Card>
         </div>
