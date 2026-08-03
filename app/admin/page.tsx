@@ -589,46 +589,48 @@ export default function AdminPage() {
     <div className="min-h-screen bg-muted/20 pb-16">
       {/* Top Navbar */}
       <header className="bg-background border-b sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Shield className="h-5 w-5" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-0 h-auto sm:h-16 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <h1 className="font-bold text-foreground leading-none">Panel de Administración</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">Savia Orquídea • {userEmail}</p>
+            <div className="min-w-0">
+              <h1 className="font-bold text-sm sm:text-base text-foreground leading-none truncate">Panel de Administración</h1>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">
+                Savia Orquídea • {userEmail}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Button
               variant="secondary"
               size="sm"
               onClick={handleCopyRegisterLink}
-              className="gap-1.5 text-xs font-medium"
+              className="gap-1.5 text-xs font-medium h-8 sm:h-9 px-2.5 sm:px-3"
               title="Copiar enlace secreto de registro para otros miembros de la Mesa Directiva"
             >
               {copiedLink ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <span>¡Link Copiado!</span>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs">¡Link Copiado!</span>
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4" />
-                  <span className="hidden md:inline">Copiar Link de Registro</span>
-                  <span className="md:hidden">Link Admin</span>
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Copiar Link de Registro</span>
+                  <span className="sm:hidden">Link Admin</span>
                 </>
               )}
             </Button>
 
-            <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+            <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex h-8 sm:h-9">
               <Link href="/">
                 <Home className="h-4 w-4 mr-2" />
                 Ver Sitio Público
               </Link>
             </Button>
-            <Button variant="destructive" size="sm" onClick={handleSignOut}>
+            <Button variant="destructive" size="sm" onClick={handleSignOut} className="h-8 sm:h-9 px-2.5 sm:px-3">
               <LogOut className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Cerrar Sesión</span>
             </Button>
@@ -637,30 +639,32 @@ export default function AdminPage() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-8">
         <Tabs defaultValue="comunicado" className="space-y-6">
-          <TabsList className="grid grid-cols-5 max-w-4xl bg-muted p-1 rounded-xl">
-            <TabsTrigger value="comunicado" className="gap-1.5 text-xs sm:text-sm">
-              <Megaphone className="h-4 w-4" />
-              <span>Comunicados</span>
-            </TabsTrigger>
-            <TabsTrigger value="documento" className="gap-1.5 text-xs sm:text-sm">
-              <FileUp className="h-4 w-4" />
-              <span>Documentos</span>
-            </TabsTrigger>
-            <TabsTrigger value="finanzas" className="gap-1.5 text-xs sm:text-sm">
-              <DollarSign className="h-4 w-4" />
-              <span>Finanzas</span>
-            </TabsTrigger>
-            <TabsTrigger value="obras" className="gap-1.5 text-xs sm:text-sm">
-              <Wrench className="h-4 w-4" />
-              <span>Obras</span>
-            </TabsTrigger>
-            <TabsTrigger value="gestion" className="gap-1.5 text-xs sm:text-sm">
-              <FileText className="h-4 w-4" />
-              <span>Publicaciones</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-5 max-w-4xl bg-muted p-1 rounded-xl gap-1">
+              <TabsTrigger value="comunicado" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 shrink-0">
+                <Megaphone className="h-4 w-4" />
+                <span>Comunicados</span>
+              </TabsTrigger>
+              <TabsTrigger value="documento" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 shrink-0">
+                <FileUp className="h-4 w-4" />
+                <span>Documentos</span>
+              </TabsTrigger>
+              <TabsTrigger value="finanzas" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 shrink-0">
+                <DollarSign className="h-4 w-4" />
+                <span>Finanzas</span>
+              </TabsTrigger>
+              <TabsTrigger value="obras" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 shrink-0">
+                <Wrench className="h-4 w-4" />
+                <span>Obras</span>
+              </TabsTrigger>
+              <TabsTrigger value="gestion" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 shrink-0">
+                <FileText className="h-4 w-4" />
+                <span>Publicaciones</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* TAB 1: Publicar Comunicados */}
           <TabsContent value="comunicado">
@@ -974,8 +978,8 @@ export default function AdminPage() {
 
                     <div className="space-y-3">
                       {(Array.isArray(finanzasData.monthly_data) ? finanzasData.monthly_data : []).map((item, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl border">
-                          <div className="flex-1 grid grid-cols-2 gap-3">
+                        <div key={index} className="flex items-center gap-2 sm:gap-3 p-3 bg-muted/40 rounded-xl border">
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <Label className="text-xs text-muted-foreground">Nombre del Mes</Label>
                               <Input
@@ -1099,7 +1103,7 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <div className="grid gap-5 sm:grid-cols-4">
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
                     <div className="space-y-2">
                       <Label htmlFor="proj-prog">Progreso (%)</Label>
                       <Input
@@ -1227,10 +1231,10 @@ export default function AdminPage() {
                                   <Edit className="h-4 w-4 mr-1" /> Editar Datos
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                                 <DialogHeader>
-                                  <DialogTitle>Editar Datos de la Obra</DialogTitle>
-                                  <DialogDescription>
+                                  <DialogTitle className="text-lg sm:text-xl">Editar Datos de la Obra</DialogTitle>
+                                  <DialogDescription className="text-xs sm:text-sm">
                                     Modifica el porcentaje de avance, presupuesto o estado.
                                   </DialogDescription>
                                 </DialogHeader>
@@ -1251,7 +1255,7 @@ export default function AdminPage() {
                                         onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
                                       />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div>
                                         <Label>Estado</Label>
                                         <Select
@@ -1277,7 +1281,7 @@ export default function AdminPage() {
                                         />
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div>
                                         <Label>Presupuesto ($)</Label>
                                         <Input
@@ -1333,12 +1337,12 @@ export default function AdminPage() {
                           {/* Thumbnails grid */}
                           <div className="flex flex-wrap gap-3 mb-4">
                             {proj.images?.map((imgUrl, idx) => (
-                              <div key={idx} className="relative group w-24 h-20 rounded-lg overflow-hidden border">
+                              <div key={idx} className="relative group w-20 h-16 sm:w-24 sm:h-20 rounded-lg overflow-hidden border">
                                 <Image src={imgUrl} alt="Foto de la obra" fill className="object-cover" />
                                 <button
                                   type="button"
                                   onClick={() => handleRemovePhotoFromProject(proj.id, imgUrl, proj.images)}
-                                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full sm:opacity-0 group-hover:opacity-100 transition-opacity"
                                   title="Eliminar foto de la galería"
                                 >
                                   <X className="h-3 w-3" />
@@ -1352,19 +1356,19 @@ export default function AdminPage() {
                           </div>
 
                           {/* Add photos form */}
-                          <div className="flex items-center gap-3 bg-muted/30 p-3 rounded-xl">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-muted/30 p-3 rounded-xl">
                             <Input
                               type="file"
                               multiple
                               accept="image/*"
-                              className="text-xs cursor-pointer bg-background"
+                              className="text-xs cursor-pointer bg-background flex-1"
                               onChange={(e) => setAdditionalPhotosFiles(e.target.files)}
                             />
                             <Button
                               size="sm"
                               onClick={() => handleAddPhotosToProject(proj.id, proj.images || [])}
                               disabled={uploadingMorePhotosId === proj.id}
-                              className="gap-1 text-xs shrink-0"
+                              className="gap-1 text-xs shrink-0 w-full sm:w-auto"
                             >
                               {uploadingMorePhotosId === proj.id ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

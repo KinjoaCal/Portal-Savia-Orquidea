@@ -57,20 +57,18 @@ export default function RegisterMesaDirectivaPage() {
         throw new Error(error.message)
       }
 
-      setSuccessMsg("¡Registro exitoso! Tu cuenta de la Mesa Directiva ha sido creada.")
+      setSuccessMsg("¡Registro exitoso! Hemos enviado un correo de confirmación de cuenta a tu e-mail. Por favor revisa tu bandeja de entrada (o carpeta de Correo no deseado / Spam) para activar tu cuenta antes de iniciar sesión.")
       setFullName("")
       setEmail("")
       setPassword("")
       setConfirmPassword("")
 
-      // Redirect to admin or login after 2 seconds
-      setTimeout(() => {
-        if (data.session) {
+      // If user has direct session (email confirm disabled in Supabase), redirect to admin after 4s
+      if (data.session) {
+        setTimeout(() => {
           router.push("/admin")
-        } else {
-          router.push("/login")
-        }
-      }, 2000)
+        }, 4000)
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Ocurrió un error al procesar el registro.")
     } finally {
@@ -116,10 +114,23 @@ export default function RegisterMesaDirectivaPage() {
           )}
 
           {successMsg && (
-            <Alert className="mb-6 border-primary/50 text-primary bg-primary/5">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <AlertTitle className="font-medium">¡Cuenta Creada!</AlertTitle>
-              <AlertDescription className="text-sm mt-1">{successMsg}</AlertDescription>
+            <Alert className="mb-6 border-primary/50 text-primary bg-primary/5 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <AlertTitle className="font-semibold text-base">¡Cuenta Creada Exitosamente!</AlertTitle>
+                  <AlertDescription className="text-sm mt-1 leading-relaxed text-foreground/90">
+                    {successMsg}
+                  </AlertDescription>
+                </div>
+              </div>
+              <div className="pt-2">
+                <Button size="sm" variant="default" asChild className="w-full sm:w-auto text-xs gap-2">
+                  <Link href="/login">
+                    Ir al Inicio de Sesión
+                  </Link>
+                </Button>
+              </div>
             </Alert>
           )}
 
