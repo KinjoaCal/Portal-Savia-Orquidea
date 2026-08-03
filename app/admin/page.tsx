@@ -7,7 +7,7 @@ import Image from "next/image"
 import { 
   Shield, LogOut, Upload, FileText, Megaphone, Trash2, 
   CheckCircle2, AlertCircle, Loader2, Home, FileUp, Image as ImageIcon,
-  ExternalLink, Plus, RefreshCw, Wrench, Clock, Images, Edit, X, DollarSign, Save
+  ExternalLink, Plus, RefreshCw, Wrench, Clock, Images, Edit, X, DollarSign, Save, UserPlus
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { uploadToCloudinary } from "@/lib/cloudinary"
@@ -138,82 +138,123 @@ export default function AdminPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
-    async function checkAuthAndLoad() {
+    let isMounted = true
+
+    const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        if (!isMounted) return
+
         if (!session) {
           router.replace("/login")
           return
         }
+
         setUserEmail(session.user?.email || "Mesa Directiva")
-        await loadData()
+        setLoadingAuth(false)
+        loadData()
       } catch (err) {
         console.error("Error al autenticar:", err)
-        router.replace("/login")
-      } finally {
-        setLoadingAuth(false)
+        if (isMounted) {
+          router.replace("/login")
+          setLoadingAuth(false)
+        }
       }
     }
 
-    checkAuthAndLoad()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      if (session) {
+        setUserEmail(session.user?.email || "Mesa Directiva")
+        setLoadingAuth(false)
+        loadData()
+      } else {
+        router.replace("/login")
+      }
+    })
+
+    checkSession()
+
+    // Safety timeout fallback (3 seconds) to guarantee the UI never gets stuck
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        setLoadingAuth(false)
+      }
+    }, 3000)
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+      clearTimeout(timer)
+    }
   }, [router])
 
   const loadData = async () => {
     setLoadingData(true)
 
     try {
-      const { data: coms } = await supabase
-        .from("comunicados")
-        .select("*")
-        .order("created_at", { ascending: false })
-      if (coms) setComunicadosList(coms)
-    } catch (err) {
-      console.warn("Error cargando comunicados:", err)
-    }
+      const [comsRes, docsRes, projsRes, finRes] = await Promise.allSettled([
+        supabase.from("comunicados").select("*").order("created_at", { ascending: false }),
+        supabase.from("documentos").select("*").order("created_at", { ascending: false }),
+        supabase.from("proyectos").select("*").order("created_at", { ascending: false }),
+        supabase.from("finanzas").select("*").eq("id", "general").maybeSingle(),
+      ])
 
-    try {
-      const { data: docs } = await supabase
-        .from("documentos")
-        .select("*")
-        .order("created_at", { ascending: false })
-      if (docs) setDocumentosList(docs)
-    } catch (err) {
-      console.warn("Error cargando documentos:", err)
-    }
+      if (comsRes.status === "fulfilled" && comsRes.value.data) {
+        setComunicadosList(Array.isArray(comsRes.value.data) ? comsRes.value.data : [])
+      }
 
-    try {
-      const { data: projs } = await supabase
-        .from("proyectos")
-        .select("*")
-        .order("created_at", { ascending: false })
-      if (projs) setProyectosList(projs)
-    } catch (err) {
-      console.warn("Error cargando proyectos:", err)
-    }
+      if (docsRes.status === "fulfilled" && docsRes.value.data) {
+        setDocumentosList(Array.isArray(docsRes.value.data) ? docsRes.value.data : [])
+      }
 
-    try {
-      const { data: fin } = await supabase
-        .from("finanzas")
-        .select("*")
-        .eq("id", "general")
-        .maybeSingle()
-      if (fin) {
+      if (projsRes.status === "fulfilled" && projsRes.value.data) {
+        const rawList = Array.isArray(projsRes.value.data) ? projsRes.value.data : []
+        const sanitized = rawList.map((p: any) => {
+          let imgs = p.images
+          if (typeof imgs === "string") {
+            try { imgs = JSON.parse(imgs) } catch { imgs = [] }
+          }
+          if (!Array.isArray(imgs)) imgs = []
+          return { ...p, images: imgs }
+        })
+        setProyectosList(sanitized)
+      }
+
+      if (finRes.status === "fulfilled" && finRes.value.data) {
+        const fin = finRes.value.data
+        let monthly = fin.monthly_data
+        if (typeof monthly === "string") {
+          try { monthly = JSON.parse(monthly) } catch { monthly = [] }
+        }
+        if (!Array.isArray(monthly)) monthly = []
+
+        const defaultMonthly = [
+          { mes: "Octubre", monto: 85200 },
+          { mes: "Noviembre", monto: 85200 },
+          { mes: "Diciembre", monto: 85200 },
+          { mes: "Enero", monto: 85200 },
+          { mes: "Febrero", monto: 85200 },
+          { mes: "Marzo", monto: 85200 },
+        ]
+
         setFinanzasData({
-          total_recaudado: fin.total_recaudado ?? 1643830,
-          cuota_mensual: fin.cuota_mensual ?? 850,
-          vecinos_al_corriente: fin.vecinos_al_corriente ?? 58,
-          total_vecinos: fin.total_vecinos ?? 64,
+          total_recaudado: Number(fin.total_recaudado ?? 1643830),
+          cuota_mensual: Number(fin.cuota_mensual ?? 850),
+          vecinos_al_corriente: Number(fin.vecinos_al_corriente ?? 58),
+          total_vecinos: Number(fin.total_vecinos ?? 64),
           tendencia: fin.tendencia || "+8%",
           ultima_actualizacion: fin.ultima_actualizacion || "Marzo 2026",
-          monthly_data: fin.monthly_data || [],
+          monthly_data: monthly.length > 0 ? monthly : defaultMonthly,
         })
       }
     } catch (err) {
-      console.warn("Error cargando finanzas:", err)
+      console.warn("Error cargando datos:", err)
     } finally {
       setLoadingData(false)
     }
   }
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -932,7 +973,7 @@ export default function AdminPage() {
                     </div>
 
                     <div className="space-y-3">
-                      {finanzasData.monthly_data.map((item, index) => (
+                      {(Array.isArray(finanzasData.monthly_data) ? finanzasData.monthly_data : []).map((item, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl border">
                           <div className="flex-1 grid grid-cols-2 gap-3">
                             <div>
@@ -1366,61 +1407,74 @@ export default function AdminPage() {
                     Comunicados Publicados ({comunicadosList.length})
                   </h3>
 
-                  {comunicadosList.length === 0 ? (
+                  {(!comunicadosList || comunicadosList.length === 0) ? (
                     <p className="text-sm text-muted-foreground italic py-4">
                       No hay comunicados publicados aún.
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {comunicadosList.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/40 border hover:border-primary/40 transition-colors"
-                        >
-                          <div className="space-y-1 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="secondary">{item.category}</Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(item.created_at).toLocaleDateString("es-MX", {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </span>
-                            </div>
-                            <h4 className="font-semibold text-foreground text-base mt-1">{item.title}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-2">{item.content}</p>
+                      {(Array.isArray(comunicadosList) ? comunicadosList : []).map((item) => {
+                        let formattedDate = ""
+                        try {
+                          if (item.created_at) {
+                            formattedDate = new Date(item.created_at).toLocaleDateString("es-MX", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          }
+                        } catch {
+                          formattedDate = ""
+                        }
 
-                            {item.file_url && (
-                              <div className="pt-2">
-                                <a
-                                  href={item.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                  Ver adjunto ({item.file_name || "Archivo"})
-                                </a>
-                              </div>
-                            )}
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteComunicado(item.id)}
-                            disabled={deletingId === item.id}
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/40 border hover:border-primary/40 transition-colors"
                           >
-                            {deletingId === item.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="space-y-1 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="secondary">{item.category}</Badge>
+                                {formattedDate && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formattedDate}
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="font-semibold text-foreground text-base mt-1">{item.title}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{item.content}</p>
+
+                              {item.file_url && (
+                                <div className="pt-2">
+                                  <a
+                                    href={item.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Ver adjunto ({item.file_name || "Archivo"})
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteComunicado(item.id)}
+                              disabled={deletingId === item.id}
+                            >
+                              {deletingId === item.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -1429,16 +1483,16 @@ export default function AdminPage() {
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-foreground">
                     <FileText className="h-5 w-5 text-accent" />
-                    Documentos Oficiales ({documentosList.length})
+                    Documentos Oficiales ({documentosList?.length || 0})
                   </h3>
 
-                  {documentosList.length === 0 ? (
+                  {(!documentosList || documentosList.length === 0) ? (
                     <p className="text-sm text-muted-foreground italic py-4">
                       No hay documentos oficiales registrados.
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {documentosList.map((doc) => (
+                      {(Array.isArray(documentosList) ? documentosList : []).map((doc) => (
                         <div
                           key={doc.id}
                           className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/40 border hover:border-accent/40 transition-colors"

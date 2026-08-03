@@ -51,6 +51,12 @@ export function FinancesSection() {
           .single()
 
         if (data) {
+          let parsedMonthly = data.monthly_data
+          if (typeof parsedMonthly === "string") {
+            try { parsedMonthly = JSON.parse(parsedMonthly) } catch { parsedMonthly = [] }
+          }
+          if (!Array.isArray(parsedMonthly)) parsedMonthly = []
+
           setFinances({
             totalRecaudado: Number(data.total_recaudado ?? 1643830),
             cuotaMensual: Number(data.cuota_mensual ?? 850),
@@ -58,7 +64,7 @@ export function FinancesSection() {
             totalVecinos: Number(data.total_vecinos ?? 64),
             tendencia: data.tendencia || "+8%",
             ultimaActualizacion: data.ultima_actualizacion || "Marzo 2026",
-            monthlyData: data.monthly_data && data.monthly_data.length > 0 ? data.monthly_data : defaultFinancialData.monthlyData,
+            monthlyData: parsedMonthly.length > 0 ? parsedMonthly : defaultFinancialData.monthlyData,
           })
         }
       } catch (err) {
@@ -75,8 +81,10 @@ export function FinancesSection() {
     ? Math.round((finances.vecinosAlCorriente / finances.totalVecinos) * 100)
     : 0
 
+  const safeMonthlyData = Array.isArray(finances.monthlyData) ? finances.monthlyData : defaultFinancialData.monthlyData
+
   // Calculate max monthly amount for percentage bars
-  const maxMonto = finances.monthlyData.reduce((max, item) => Math.max(max, item.monto), 1)
+  const maxMonto = safeMonthlyData.reduce((max, item) => Math.max(max, Number(item?.monto) || 0), 1)
 
   return (
     <section id="finanzas" className="py-24 bg-background">
@@ -187,7 +195,7 @@ export function FinancesSection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {finances.monthlyData.map((item, idx) => (
+              {safeMonthlyData.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4">
                   <div className="w-28 text-sm font-medium text-foreground">
                     {item.mes}
@@ -196,10 +204,10 @@ export function FinancesSection() {
                     <div className="h-8 rounded-lg bg-muted overflow-hidden">
                       <div 
                         className="h-full bg-primary/80 rounded-lg flex items-center justify-end pr-3 transition-all"
-                        style={{ width: `${Math.min(100, Math.max(8, (item.monto / maxMonto) * 100))}%` }}
+                        style={{ width: `${Math.min(100, Math.max(8, ((item?.monto || 0) / maxMonto) * 100))}%` }}
                       >
                         <span className="text-xs font-medium text-primary-foreground">
-                          ${item.monto.toLocaleString()}
+                          ${(item?.monto || 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -207,7 +215,7 @@ export function FinancesSection() {
                 </div>
               ))}
 
-              {finances.monthlyData.length === 0 && (
+              {safeMonthlyData.length === 0 && (
                 <p className="text-sm text-muted-foreground italic text-center py-4">
                   No hay desglose mensual registrado.
                 </p>

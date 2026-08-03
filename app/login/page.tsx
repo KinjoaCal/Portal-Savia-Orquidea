@@ -20,21 +20,30 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if user is already authenticated
-    async function checkUser() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          router.replace("/admin")
-        }
-      } catch (err) {
-        console.error("Error comprobando sesión:", err)
-      } finally {
+    let isMounted = true
+
+    // Listen to state changes & get initial session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      if (session) {
+        router.replace("/admin")
+      } else {
         setCheckingAuth(false)
       }
+    })
+
+    // Fallback timeout in case auth check takes too long on mobile networks
+    const timer = setTimeout(() => {
+      if (isMounted) setCheckingAuth(false)
+    }, 2500)
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+      clearTimeout(timer)
     }
-    checkUser()
   }, [router])
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
